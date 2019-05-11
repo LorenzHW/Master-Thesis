@@ -1,2 +1,43 @@
 \section{Introduction}\label{sec:introduction}
-TODO
+Deep neural networks have become significantly useful at many difficult machine
+learning tasks. They are able to recognize images with near human accuracy
+\cite{lecun1998gradient}. They are used for speech recognition
+\cite{hinton2012deep}, natural language processing \cite{andor2016globally}, and
+playing games \cite{silver2016mastering}.
+
+Deep neural networks are the foundation of deep generative models which are
+among the most promising approaches. Generative models have many short-term
+applications like image generation \cite{goodfellow2014generative}, text
+generation \cite{semeniuta2017hybrid}, or semi- and unsupervised machine
+learning tasks \cite{radford2015unsupervised}  but in the long run, they hold
+the potential to automatically learn the natural features of a dataset, whether
+categories or dimensions or something else entirely.
+
+One of the most popular generative model is the variational autoencoder (VAE)
+for unsupervised learning of complicated distributions. VAE are tempting,
+because they build on top neural network, can be trained with stochastic
+gradient descent. VAEs have already shown promise in generating many kinds of
+complicated data, including handwritten digits, faces, house numbers, CIFAR
+images, physical models of scenes, and segementation.
+
+However, researchers have discovered that existing neural networks are
+vulnerable to attack. The goal of adversarial attacks is to fool deep neural
+networks by applying elaborately designed perturbation to input data.
+Adversarial attacks make it dangerous to use deep neural networks in
+applications in the real world. In the case of autonomous driving, by making an
+object detector recognize pedestrians as roads, attacks can cause an accident.
+
+The existence of adversarial examples has inspired research into how neural
+networks can be hardened against such attacks. Defensive distillation is one of
+those recently proposed defenses to harden neural networks against adversarial
+examples. Initial analysis was very promising: defensive distillation defeats
+existing attack algorithms and reduces their likelihood of success from 95\% to
+0.5\%. Defensive distillation can be applied to any feed-forward neural network
+and requires only one retraining step, and is currently one of the only defenses
+that offers strong safety guarantees against examples of adversaries.
+
+In this paper an overview is given on the different kinds of autoencoders and
+variational autoencoders. Then prominent adversarial attacks are outlined. At
+last, we take a look at recent work that combines VAE and adversarial methods.
+Contributions in relations with this paper are listed in section
+\ref{sec:adversarial_attacks}.
