@@ -11,11 +11,11 @@ described as
     \vect{x}^{adv}  = \vect{x} + \vect{\eta}.
 \end{equation}
 
-Where $\vect{x}^{adv}$ is the adversarial example, $x$ the original input and $\eta$
+Where $\vect{x}^{adv}$ is the adversarial example, $\vect{x}$ the original input and $\eta$
 the perturbation.
 
 
-First, this section describes the most promiment methods (attacks) to generate
+First, this section describes the most prominent attacks to generate
 adversarial examples and then highlights efforts that have been made to connect
 adversarial examples with autoencoders. The attacks mentioned here can be found
 in the
@@ -63,11 +63,11 @@ to make sure that they are in an $\epsilon-neighbourhood$  of the original
 image:
 
 
-\begin{equation}\label{eq:fgsm}
+\begin{equation}\label{eq:pgd}
     \vect{x}^{adv}_{0} = \vect{x}, \quad \vect{x}^{adv}_{N + 1}=Clip_{x, \epsilon} \Big \{\vect{x}^{adv}_{N} + \alpha sign\big(\nabla_{x}J(\vect{x}^{adv}_{N}, y)\big)  \Big\}
 \end{equation}
 
-Typcially $\alpha = 1$ is used. This means that value of each poxel is only
+Typcially $\alpha = 1$ is used. This means that the value of each pixel is only
 changed by 1 on each step. This method is known as "projected gradient descent"
 (PGD) or "basic iterative method". \cite{kurakin2016adversarial, madry2017towards}
 
