@@ -214,7 +214,7 @@ $\mu$ and variance $\sigma^2$.
 
 Because an individual sample of z is not created by a function, but rather by a
 sampling process whose output changes every time we query it, it may seem
-counterintuitive to take the derivatives of y with respect to the parameters of
+counterintuitive to take the derivatives of $\vect{z}$ with respect to the parameters of
 its distribution, $\mu$ and $\sigma^2$. However, we can rewrite the sampling
 process as transforming an underlying random value $\epsilon \sim
 \mathcal{N}(\epsilon; 0, 1)$ to obtain a sample from the desired distribution:
@@ -232,7 +232,7 @@ Figure \ref{reparam_trick} visualizes the reparameterization trick.
 	\includegraphics[width=\linewidth]{/2_background/reparam_trick}
     \caption{On the left hand side the original form is displayed. It is not
     possible to back propagate through a stochastic node. On the right side the
-    reparameterised form is displayed with a stochastic node $\epsilon$ giving t
+    reparameterised form is displayed with a stochastic node $\epsilon$ giving
     the opportunity to train parameters $\mu$ and $\sigma$ while
     back-propagation.} 
 	\label{reparam_trick}
