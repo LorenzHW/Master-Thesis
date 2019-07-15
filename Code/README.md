@@ -1,6 +1,6 @@
-### Code for my Master Thesis
+## Code for my Master Thesis
 
-#### Prerequisite
+### Prerequisite:
 
 For **Anaconda** users:
     
@@ -10,12 +10,12 @@ For **pip** users:
     
     pip install -r requirements.txt
 
-#### Overview
+### Overview:
 The directory `variational_autoencoder` contains an implementation of a variational autoencoder and an mnist example.
 The folder `variational_autoencoder/weights` contains saved configurations of the model.
 
 
-#### Usage
+### Usage:
 To run the mnist example, run:
 
     python -m variational_autoencoder.mnist
