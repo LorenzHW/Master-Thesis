@@ -6,6 +6,16 @@ __pycache__/
 # C extensions
 *.so
 
+.idea
+thesis.aux
+thesis.bcf
+thesis.lof
+thesis.log
+thesis.lot
+thesis.run.xml
+thesis.toc
+*.aux
+
 # Distribution / packaging
 .Python
 build/
