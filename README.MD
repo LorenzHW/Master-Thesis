@@ -1,6 +1,6 @@
 ## Master Thesis
 
-Chair: [Chair of Data science](http://www.fim.uni-passau.de/data-science/)  
+Chair: [Chair of Data science](http://www.fim.uni-passau.de/en/data-science/)  
 Supervisor: [Prof. Dr. Michael Granitzer](http://www.fim.uni-passau.de/en/media-computer-science/team/)  
 Topic: Software Design Patterns for Machine Learning Workflows
 
