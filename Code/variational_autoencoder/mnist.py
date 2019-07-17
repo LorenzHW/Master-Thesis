@@ -6,6 +6,7 @@ from easydict import EasyDict
 import os
 
 from variational_autoencoder.autoencoder import CVAE, compute_loss
+from variational_autoencoder.mnist_plotter import MNISTPlotter
 
 FLAGS = flags.FLAGS
 
@@ -40,7 +41,7 @@ def generate_and_save_images(model, epoch, test_input):
 
 
 def main(_):
-    latent_dim = 50
+    latent_dim = 2
     num_examples_to_generate = 16
 
     data = ld_mnist()
@@ -56,7 +57,7 @@ def main(_):
     @tf.function
     def train_step(x):
         with tf.GradientTape() as tape:
-            loss = compute_loss(model, x)
+            loss, z = compute_loss(model, x)
         gradients = tape.gradient(loss, model.trainable_variables)
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         train_loss(loss)
@@ -77,16 +78,22 @@ def main(_):
 
     progress_bar_test = tf.keras.utils.Progbar(10000)
 
+    latent_representation_values = []
     for (x, y) in data.test:
-        test_loss(compute_loss(model, x))
+        loss, z = compute_loss(model, x)
+        latent_representation_values.append(z)
+        test_loss(loss)
         elbo = -test_loss.result()
         progress_bar_test.add(x.shape[0], values=[('loss', elbo)])
 
+    plotter = MNISTPlotter()
+    plotter.plot_2D_latent_representation(latent_representation_values, data.test)
+
 
 if __name__ == '__main__':
-    flags.DEFINE_integer('nb_epochs', 1, 'Number of epochs.')
+    flags.DEFINE_integer('nb_epochs', 30, 'Number of epochs.')
     # flags.DEFINE_float('eps', 0.3, 'Total epsilon for FGM and PGD attacks.')
-    flags.DEFINE_bool('train_new', True,
+    flags.DEFINE_bool('train_new', False,
                       'If true a new model is trained and weights are saved to /weights, else weights are loaded from '
                       '/weights. Additionally, images are generated after every epoch.')
     app.run(main)
