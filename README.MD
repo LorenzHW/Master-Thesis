@@ -10,3 +10,10 @@ Topic: Software Design Patterns for Machine Learning Workflows
 The goal of the thesis is to investigate, how and which software design patterns can be transferred to machine learning workflows. The student needs to develop design patterns and best practices for implementing machine learning workflows and implement and evaluate selected parts of the design pattern. Examples could be Unit Testing for ML Workflows, transfer of models amongst domains (aka Transfer Learning) or the identification of extreme, adversarial examples (adversarial learning).
 
 The master thesis is conducted with the [SCCH Hagenberg](https://www.scch.at/en/news).
+
+#### Structure
+[Code](https://github.com/LorenzHW/Master-Thesis/tree/master/Code) contains the code for my thesis.  
+[Thesis](https://github.com/LorenzHW/Master-Thesis/tree/master/Thesis) contains the LaTeX files.  
+[Presentation](https://github.com/LorenzHW/Master-Thesis/tree/master/Presentation) will contain files for my final presentation.  
+[Seminar](https://github.com/LorenzHW/Master-Thesis/tree/master/Seminar) contains a research paper about variational
+autoencoder and adversarial attacks that was done in preparation for this thesis.  
