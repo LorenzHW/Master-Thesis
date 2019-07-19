@@ -81,4 +81,6 @@ def compute_loss(model, x):
     logpx_z = -tf.reduce_sum(cross_ent, axis=[1, 2, 3])
     logpz = log_normal_pdf(z, 0., 0.)
     logqz_x = log_normal_pdf(z, mean, logvar)
+
+    # We return z here so we can plot the latent representation of the test data
     return -tf.reduce_mean(logpx_z + logpz - logqz_x), z
