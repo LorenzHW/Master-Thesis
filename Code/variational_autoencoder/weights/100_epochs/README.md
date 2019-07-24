@@ -1,4 +1,4 @@
 Epochs: 100  
 Latent dimension: 50  
-Train loss: 107.3519  
-Test loss: -99.049  
+Train loss: 106.8479
+Test loss: -98.7246  
