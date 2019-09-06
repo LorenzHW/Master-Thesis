@@ -32,6 +32,7 @@ gradients calculated by back-propagation.
     code $\textbf{h}$. There are two components in the autoencoder: the encoder
     $f$ (mapping $\textbf{x}$ to $\textbf{h}$) and $g$ (mapping $\textbf{h}$ to
     $\textbf{r}$).}
+    \label{fig:autoencoder}
 \end{figure}
 
 
@@ -39,7 +40,7 @@ gradients calculated by back-propagation.
 Copying the input to the output may sound useless, but we are usually not
 concerned about the decoder's output. Instead, by training the autoencoder we
 try to achieve that $ \textbf{h}$ is taking on useful features, as a result of
-copying the input to the output.
+copying the input to the output \cite{vincent2010stacked}.
 
 To obtain useful features from the autoencoder we define $\textbf{h}$ with a smaller size
 than $\textbf{x}$. \textbf{Undercomplete} autoencoders have a code dimension
@@ -68,7 +69,8 @@ perform the copying task without extracting useful features from the data.
 An akin problem happens when the hidden code has dimensions equal to the input,
 or dimensions larger than the input. Under those circumstances, even a linear
 encoder and a linear decoder learns how to replicate the input to the output
-without learning anything meaningful about the distribution of the data. 
+without learning anything meaningful about the distribution of the data  
+\cite{makhzani2015adversarial}.
 
 Ideally, any autoencoder architecture could be successfully trained by choosing
 the code dimension and the encoder and decoder capacity based on the complexity
@@ -100,7 +102,7 @@ A general strategy for the design of the output units and the feedforward
 network loss function is to define the output distribution
 $p(\textbf{y}|\textbf{x})$ and minimize the negative log-likelihood $-\log
 p(\textbf{y}|\textbf{x})$ . In that case \textbf{y} is a vector of targets, such
-as class labels.
+as class labels \cite{werbos2002stochastic}.
 
 We may think of the decoder as a conditional distribution \\
 $p_{decoder}(\textbf{x}|\textbf{h})$ given a hidden code $\textbf{h}$. Then, by
@@ -119,8 +121,7 @@ $p_{encoder}(\textbf{h}|\textbf{x})$.
     \caption{The architecture of a stochastic autoencoder, in which both the
     encoder and the decoder are not simple functions. Their output can be seen
     as samples from a distribution, $p_{encoder}(\textbf{h}|\textbf{x})$ for the
-    encoder and $p_{decoder}(\textbf{x}|\textbf{h})$ for the decoder.} 
-	\label{fig:autoencoder}
+    encoder and $p_{decoder}(\textbf{x}|\textbf{h})$ for the decoder.}
 \end{figure}
 
 \subsection{Variational Autoencoders} \label{subsec:varautoencoders}
@@ -128,7 +129,8 @@ Many generative models form on the idea of using a differentiable generator
 network. The model uses a differentiable function that is typically defined by a
 neural network to convert samples of latent variables \textbf{z} into samples
 \textbf{x} or distributions over samples \textbf{x}. This model class combines
-autoencoders that match the generator net with an inference net (encoder).
+autoencoders that match the generator net with an inference net (encoder)
+\cite{doersch2016tutorial}.
 
 To create a sample from the model, the VAE first picks a sample \textbf{z}
 from the code distribution $p_{model}(\textbf{z})$. Then the sample runs through
@@ -191,7 +193,7 @@ VAE achieves excellent results and is one of the state-of-the-art generative
 modeling approaches. The main disadvantage is that samples from variational
 autoencoders trained on images are likely to be a little bit blurry. It is not
 yet known why this anomaly happens. One possibility is that the blurriness is an
-instrinsic effect of maximum likelihood.
+instrinsic effect of maximum likelihood \cite{Goodfellow-et-al-2016}.
 
 \subsubsection{Reparameterization trick}
 Traditional neural networks execute a deterministic conversion of some input
@@ -201,7 +203,8 @@ However, it is not possible to backpropagate through a stochastic node. One
 simple solution is to augment the neural network with extra inputs
 $\boldsymbol\epsilon$ that are sampled from a simple probability distribution.
 The neural network can then continue to perfrom deterministic computation
-internally like calculating gradients for training using back-propagation.
+internally like calculating gradients for training using back-propagation
+\cite{kingma2015variational}.
 
 As an example let us look at the operation of generating a sample from a VAE.
 During training the VAE model draws a sample \textbf{z} from
