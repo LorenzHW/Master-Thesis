@@ -81,16 +81,17 @@ class MNISTPlotter:
             self.axes[0].plot(lists.xs, lists.ys, **param_dict)
 
     def plot_net_losses(self):
-        lists = self.data.convert_points_to_lists(sorted(self.data.points, key=lambda p: p.loss, reverse=True)[:2])
+        # Let's sort points in ascending order, so points with highest loss get plotted last (above other points)
+        lists = self.data.convert_points_to_lists(sorted(self.data.points, key=lambda p: p.loss))
         param_dict = {
-            "cmap": plt.get_cmap("spring"),
+            "cmap": plt.get_cmap("binary"),
             "c": lists.losses,
             "marker": "o",
             "linestyle": "None",
 
         }
         scatter_plot = self.axes[1].scatter(lists.xs, lists.ys, **param_dict)
-        self.fig.colorbar(scatter_plot, ax=self.axes[1])
+        self.fig.colorbar(scatter_plot, ax=self.axes[1]).set_label("Loss")
 
     @staticmethod
     def _init_data(zs: List[List], losses: List, test_data: BatchDataset) -> Data:
@@ -111,6 +112,8 @@ class MNISTPlotter:
         self.axes[0].yaxis.label.set_text("Second dimension")
         self.axes[0].legend()
 
-        self.axes[1].title.set_text("TODO")
+        self.axes[1].title.set_text("Loss for each datapoint")
+        self.axes[1].xaxis.label.set_text("First dimension")
+        self.axes[1].yaxis.label.set_text("Second dimension")
 
         self.fig.show()
