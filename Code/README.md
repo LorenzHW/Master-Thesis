@@ -10,22 +10,6 @@ For **pip** users:
     
     pip install -r requirements.txt
 
-### Overview:
-The directory [variational_autoencoder](https://github.com/LorenzHW/Master-Thesis/tree/master/Code/variational_autoencoder) 
-contains an implementation of a variational autoencoder and an mnist example.
-The folder [variational_autoencoder/weights](https://github.com/LorenzHW/Master-Thesis/tree/master/Code/variational_autoencoder/weights) 
-contains saved configurations of the model.
-
-Our goal is to find adversarial examples inside of the latent representation.
-
-### Usage:
-To run the mnist example, run:
-
-    python -m variational_autoencoder.mnist
-
-You can either train a new model from scratch or use existing weights (set the corresponding flag inside `variational_autoencoder/mnist.py`).
-In case you create a new model from scratch your weights will be saved to `variational_autoencoder/weights`. Additionally,
-an image will be generated after each epoch.
 
 ### Contribution
 
