@@ -52,6 +52,9 @@ def main():
     checkpoint_path = log_dir + "/weights/variational_autoencoder_weights"
     model.save_weights(checkpoint_path, save_format='tf')
 
+    bottleneck_path = log_dir + "/bottleneck"
+    model.save_bottleneck_values(bottleneck_path)
+
 
 if __name__ == '__main__':
     main()

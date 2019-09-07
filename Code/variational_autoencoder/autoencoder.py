@@ -9,10 +9,10 @@ class CVAE(tf.keras.Model):
     def __init__(self, latent_dim):
         super(CVAE, self).__init__()
         self.latent_dim = latent_dim
+        self.bottleneck_values = []
 
         self.inference_net = tf.keras.Sequential(
             [
-
                 tf.keras.layers.InputLayer(input_shape=(32, 32, 3)),
                 tf.keras.layers.Conv2D(
                     filters=32, kernel_size=3, strides=(2, 2), activation='relu'),
@@ -80,7 +80,7 @@ class CVAE(tf.keras.Model):
             -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi),
             axis=raxis)
 
-    def compute_loss(self, x):
+    def compute_loss(self, x, save_bottleneck_features=False):
         mean, logvar = self._encode(x)
         z = self._reparameterize(mean, logvar)
         x_logit = self._decode(z)
@@ -89,6 +89,9 @@ class CVAE(tf.keras.Model):
         logpx_z = -tf.reduce_sum(cross_ent, axis=[1, 2, 3])
         logpz = self._log_normal_pdf(z, 0., 0.)
         logqz_x = self._log_normal_pdf(z, mean, logvar)
+
+        if save_bottleneck_features:
+            self.bottleneck_values.append(z.numpy())
 
         return -tf.reduce_mean(logpx_z + logpz - logqz_x)
 
@@ -130,9 +133,8 @@ class CVAE(tf.keras.Model):
         # TODO: How would transfer learning affect the autoencoder?
 
     def evaluate(self, test_data, steps):
-        @tf.function
         def test_step(x):
-            loss = self.compute_loss(x)
+            loss = self.compute_loss(x, save_bottleneck_features=True)
             return loss
 
         progress_bar_test = tf.keras.utils.Progbar(steps + 1)
@@ -142,3 +144,8 @@ class CVAE(tf.keras.Model):
             loss = test_step(x)
             test_loss(loss)
             progress_bar_test.add(1, values=[('loss', test_loss.result())])
+
+    def save_bottleneck_values(self, path):
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        np.save(path + "/values.npy", self.bottleneck_values)
