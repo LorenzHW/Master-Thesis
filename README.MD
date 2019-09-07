@@ -1,8 +1,9 @@
-## Master Thesis
+## Master Thesis [WIP]
 
 Chair: [Chair of Data science](http://www.fim.uni-passau.de/en/data-science/)  
 Supervisor: [Prof. Dr. Michael Granitzer](http://www.fim.uni-passau.de/en/media-computer-science/team/)  
-Topic: Software Design Patterns for Machine Learning Workflows
+Topic: Software Design Patterns for Machine Learning Workflows  
+Deadline: 7.1.2020
 
  #### Topic description
  Software Engineering defines standard procedures and design patterns for developing complex software products. Such an approach does not exist for machine learning yet. Quite contrary, machine learning is most often driven in an ad-hoc, trial and error manner.
