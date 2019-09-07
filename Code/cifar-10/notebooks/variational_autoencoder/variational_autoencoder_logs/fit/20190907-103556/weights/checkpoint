@@ -1,0 +1,2 @@
+model_checkpoint_path: "variational_autoencoder_weights"
+all_model_checkpoint_paths: "variational_autoencoder_weights"
