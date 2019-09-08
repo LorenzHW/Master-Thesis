@@ -20,10 +20,4 @@ The master thesis is conducted with the [SCCH Hagenberg](https://www.scch.at/en/
 autoencoder and adversarial attacks that was done in preparation for this thesis.  
 
 
-Open points:
-improve accuracy of mobilenev2 with fine tuning
-build cifar 10 auto encoder similar to github one
-make readme for granitzer with MNIST and cifar + loss values from some classifier (mobilenetv2, some easy classifier)
-simple mnist classifier to predict on data that captures the loss
-cifar 10 with latent dim 2 wont work?
 
