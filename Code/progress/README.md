@@ -43,3 +43,6 @@ Latent representation of each sample from the test data (10 000 examples).
 Latent representation of each sample from the test data in correlation with the loss of a classifier (transfer learning with MobileNetV2).
 The darker the point the higher the loss was for that prediction:
 ![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/latent_rep_loss_cifar.png "Logo Title Text 1")
+
+The plotter notebook:
+* [Plotting for MNIST and cifar 10](https://colab.research.google.com/drive/1Gofh_CrEp9cYRSxQwpsBEzor8AFmnFtO)
