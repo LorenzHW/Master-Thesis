@@ -31,7 +31,7 @@ Hard facts of VAE training:
 * Test loss: 1960,59
 
 Hard facts of MobileNetV2 training:
-* Train accuracy: 91%
+* Train accuracy: 99%
 * Validation accuracy: 94%  
 * Test data accuracy: 93%
 * Fine tuning was needed to go from 79% to 93%
