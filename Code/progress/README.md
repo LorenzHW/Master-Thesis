@@ -10,6 +10,9 @@ Hard facts of VAE training:
 * Validation loss: 153,52  
 * Test loss: 153,60
 
+Hard facts about MNIST classifier:
+* Simple MNIST classifier with 90+% accuracy
+
 Latent representation of each sample from the test data (10 000 examples)
 ![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/latent_rep.png "Logo Title Text 1")
 
