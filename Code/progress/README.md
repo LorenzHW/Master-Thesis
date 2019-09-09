@@ -36,8 +36,8 @@ Hard facts of MobileNetV2 training:
 * Test data accuracy: 93%
 * Fine tuning was needed to go from 79% to 93%
 
-TODO: This is a mess. Try transfer learning inside of the encoder
-Latent representation of each sample from the test data (10 000 examples). 
+Latent representation of each sample from the test data (10 000 examples).
+As of now this is not of much help. I'll try to improve the latent representation by using transfer learning inside of the encoder.
 ![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/latent_rep_cifar.png "Logo Title Text 1")
 
 Latent representation of each sample from the test data in correlation with the loss of a classifier (transfer learning with MobileNetV2).
