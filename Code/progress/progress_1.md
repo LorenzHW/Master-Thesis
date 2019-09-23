@@ -14,12 +14,12 @@ Hard facts about MNIST classifier:
 * Simple MNIST classifier with 90+% accuracy
 
 Latent representation of each sample from the test data (10 000 examples)
-![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/latent_rep.png "Logo Title Text 1")
+![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_1/latent_rep.png "Logo Title Text 1")
 
 
 Latent representation of each sample from the test data in correlation with the loss of a classifier.
 The darker the point the higher the loss was for that prediction:
-![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/latent_rep_loss.png "Logo Title Text 1")
+![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_1/latent_rep_loss.png "Logo Title Text 1")
 
 ## Cifar-10
 Corresponding notebooks:
@@ -41,11 +41,11 @@ Hard facts of MobileNetV2 training:
 
 Latent representation of each sample from the test data (10 000 examples).
 As of now this is not of much help. I'll try to improve the latent representation by using transfer learning inside of the encoder.
-![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/latent_rep_cifar.png "Logo Title Text 1")
+![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_1/latent_rep_cifar.png "Logo Title Text 1")
 
 Latent representation of each sample from the test data in correlation with the loss of a classifier (transfer learning with MobileNetV2).
 The darker the point the higher the loss was for that prediction:
-![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/latent_rep_loss_cifar.png "Logo Title Text 1")
+![alt text](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_1/latent_rep_loss_cifar.png "Logo Title Text 1")
 
 The plotter notebook:
 * [Plotting for MNIST and cifar 10](https://colab.research.google.com/drive/1Gofh_CrEp9cYRSxQwpsBEzor8AFmnFtO)
