@@ -65,14 +65,14 @@ Hard facts of VAE training with triplet loss and reconstruction loss - **VAE_TL*
 * Test reconstruction loss: 154.61
 * Test triplet loss: **1.14**
 
-Latent representation of the two classifiers 
+Latent representation of the two VAEs:
 
 VAE|VAE_TL
 :-------------------------:|:-------------------------:
 ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/test_data.png)  |  ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/test_data_tl.png)
 
 
-Reconstruction loss of the classifier
+Reconstruction loss of the VAEs:
 
 VAE|VAE_TL
 :-------------------------:|:-------------------------:
