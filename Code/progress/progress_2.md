@@ -56,6 +56,8 @@ Epoch 90|Epoch 100
 :-------------------------:|:-------------------------:
 ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/epoch_90_loss.png)  |  ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/epoch_100_loss.png)
 
+Observations:
+* The reconstruction loss is higher for data points which are tightly clustered together 
 
 #### **VAE_TL**
 Hard facts of VAE training with triplet loss and reconstruction loss - **VAE_TL**:
@@ -78,6 +80,8 @@ VAE|VAE_TL
 :-------------------------:|:-------------------------:
 ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/test_data_loss.png)  |  ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/test_data_tl_loss.png)
 
+Observations:
+* Taking a look at the figures above I would say that VAE_TL's latent representation is spun by 90 degrees.
 
 One interesting fact is following:
 * Before training with a combined loss on 100 epochs, I trained the VAE alternately. First 10 epochs with RC-Loss then 10
