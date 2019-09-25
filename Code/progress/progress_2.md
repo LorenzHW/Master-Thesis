@@ -74,7 +74,7 @@ VAE|VAE_TL
 ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/test_data.png)  |  ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/test_data_tl.png)
 
 
-Reconstruction loss of the VAEs:
+Loss of the VAEs:
 
 VAE|VAE_TL
 :-------------------------:|:-------------------------:
@@ -84,6 +84,6 @@ Observations:
 * Taking a look at the figures above I would say that VAE_TL's latent representation is spun by 90 degrees.
 
 One interesting fact is following:
-* Before training with a combined loss on 100 epochs, I trained the VAE alternately. First 10 epochs with RC-Loss then 10
-epochs with 10 epochs with TL-Loss and so on. This resulted the loss that currently is not used for training to increase again
+* Before training with a combined loss on 100 epochs, I trained the VAE alternately. First 10 epochs by maximizing ELBO then 10
+epochs with 10 epochs with TL-Loss and so on. This resulted that the loss that currently is not used for training to increase again
 * Combining both losses for back propagation decreased both losses
