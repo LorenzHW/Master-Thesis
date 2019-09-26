@@ -6,8 +6,8 @@ Corresponding notebooks:
 Hard facts of VAE training (not using triplet loss) - **VAE**:
 * Latent dimension: 2  
 * Epochs: 100  
-* Train reconstruction loss: 152,77  
-* Test reconstruction loss: 154,32
+* Train ELBO loss: 152,77  
+* Test ELBO loss: 154,32
 * Test triplet loss: 1.6711
 
 Latent representation during training (60 000 samples) every 10 epochs:
@@ -33,7 +33,7 @@ Epoch 90|Epoch 100
 ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/epoch_90.png) |  ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/epoch_100.png) 
 
 
-Reconstruction loss during training for every sample every 10 epochs 
+ELBO loss during training for every sample every 10 epochs 
 
 
 Epoch 10|Epoch 20
@@ -57,14 +57,14 @@ Epoch 90|Epoch 100
 ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/epoch_90_loss.png)  |  ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_2/epoch_100_loss.png)
 
 Observations:
-* The reconstruction loss is higher for data points which are tightly clustered together 
+* The ELBO loss is higher for data points which are tightly clustered together 
 
 #### **VAE_TL**
-Hard facts of VAE training with triplet loss and reconstruction loss - **VAE_TL**:
+Hard facts of VAE training with triplet loss and ELBO loss - **VAE_TL**:
 * Latent dimension: 2  
 * Epochs: 100  
-* Train reconstruction loss: 152.42  
-* Test reconstruction loss: 154.61
+* Train ELBO loss: 152.42  
+* Test ELBO loss: 154.61
 * Test triplet loss: **1.14**
 
 Latent representation of the two VAEs:
