@@ -39,3 +39,7 @@ Observations:
 * We see the autoencoder trained with the triplet loss has the same ELBO loss as the autoencoder without the triplet loss and additionally a lower triplet loss
 * Taking a look at the dimension axes of VAE_TL we see that everything is compressed into a smaller space even though the ELBO loss is the same
 * VAE_TL: x-axis: -1,5 to 1.0, y-axis: -2.0 to 1.0; VAE: x-axis: -3.0 to 3 y-axis: -2 to 5 
+
+
+An overview of the current design to get a better understanding:
+![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_3/triplet_loss_vae_pipeline.png)
