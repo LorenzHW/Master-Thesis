@@ -1,6 +1,8 @@
 ## MNIST
+* Checking whether triplet loss is implemented correctly: comparing training of encoder on different labels
+
 Corresponding notebook:
-* [VAE_TL](https://colab.research.google.com/drive/1eJATlLv6hivc7uOBduFvbQi5HaCXlC_y)
+* [VAE_TL](https://colab.research.google.com/drive/15TGjQRX4du1Ox_SAMWCHGggo2y5DVLOv)
 
 #### Using default MNIST labels for triplet loss
 Latent representation:
@@ -17,4 +19,6 @@ Yellow points are wrongly classified by the external NN:
 
 
 Observations:
-* 
+* We see clearly that the triplet loss works correctly for the first case where we use the default MNIST labels
+* For the second case where we use customized labels based on the entropy of an external NN the encoder is not learning properly.
+A proper representation would be wrongly classified points clustered together (points with high entropy).
