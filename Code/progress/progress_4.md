@@ -1,16 +1,20 @@
-#### **VAE_TL**
-Hard facts of VAE training with triplet loss and ELBO loss - **VAE_TL**:
-* Latent dimension: 2  
-* Epochs: 100  
-* Test ELBO loss: 155.7683
-* Test triplet loss: 1.9240
+## MNIST
+Corresponding notebook:
+* [VAE_TL](https://colab.research.google.com/drive/1eJATlLv6hivc7uOBduFvbQi5HaCXlC_y)
 
-Latent representation of VAE_TL:
-![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_4/test_data_latent_rep.png)
+#### Using default MNIST labels for triplet loss
+Latent representation:
+![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_4/latent_rep_triplet_loss_mnist_labels.png)
 
-Loss of external classifier in correlation with latent Latent representation. The darker the point the higher the loss was for that prediction:
-![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_4/test_data_loss_external.png)
+Yellow points are wrongly classified by the external NN:
+![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_4/y_vs_pred_triplet_loss_mnist_labels.png)
 
-Correct (purple) vs Incorrect (yellow) Predictions:
-![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_4/test_data_y_vs_pred.png)
+#### Using customized labels based on entropy of output layer of an external NN for triplet loss
+![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_4/latent_rep_triplet_loss_custom_labels.png)
 
+Yellow points are wrongly classified by the external NN:
+![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_4/y_vs_pred_triplet_loss_custom_labels.png)
+
+
+Observations:
+* 
