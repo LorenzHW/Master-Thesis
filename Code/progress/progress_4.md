@@ -1,5 +1,7 @@
 ## MNIST
-* Checking whether triplet loss is implemented correctly: comparing training of encoder on different labels
+* This experiment is to verify two points: is the TL function correctly implemented and is the encoder learning what it is supposed to learn
+* I trained the encoder two times with the triplet loss (no ELBO). The first time I used the default MNIST labels as ground truth and the 
+second time I used customized labels based on the entropy of an external NN.
 
 Corresponding notebook:
 * [VAE_TL](https://colab.research.google.com/drive/15TGjQRX4du1Ox_SAMWCHGggo2y5DVLOv)
