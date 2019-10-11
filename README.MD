@@ -14,10 +14,6 @@ The master thesis is conducted with the [SCCH Hagenberg](https://www.scch.at/en/
 
 #### Structure
 [Code](https://github.com/LorenzHW/Master-Thesis/tree/master/Code) contains the code for my thesis.  
-[Thesis](https://github.com/LorenzHW/Master-Thesis/tree/master/Thesis) contains the LaTeX files.  
-[Presentation](https://github.com/LorenzHW/Master-Thesis/tree/master/Presentation) will contain files for my final presentation.  
-[Seminar](https://github.com/LorenzHW/Master-Thesis/tree/master/Seminar) contains a research paper about variational
-autoencoder and adversarial attacks that was done in preparation for this thesis.  
 
 
 
