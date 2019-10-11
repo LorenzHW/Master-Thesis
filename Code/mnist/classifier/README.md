@@ -1,8 +1,8 @@
 ### MNIST classifier
-Corresponding notebook: [Train mnist classifier](https://colab.research.google.com/drive/1ExE-VrCrn1OxJR3Sbpil6B0q_UGwLGgS)  
-Epochs: 5
-Train accuracy: 96%  
-Validation accuracy: 97%    
-Test data accuracy: 97%  
-losses directory: contains for the loss values the 10 000 test samples; used by the plotter
-weights: weights of the classifier
+
+#### Without-additional-data 20191011-090725
+Slight overfit on trainings data:
+Epoch 7/7
+421/421 [==============================] - 20s 47ms/step - loss: 0.0813 - accuracy: 0.9757 - val_loss: 0.0863 - val_accuracy: 0.9761
+Evaluation:
+78/78 [==============================] - 3s 35ms/step - loss: 0.0783 - accuracy: 0.9753
