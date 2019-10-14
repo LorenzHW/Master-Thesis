@@ -8,6 +8,9 @@ A neural network trained on MNIST:
 
 Graph of validation and train
 
+
 Loss over epochs| Accuracy over epochs
 :-------------------------:|:-------------------------:
-![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_loss.svg?sanitize=true)  |  ![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_accuracy.svg?sanitize=true)
+<img src="https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_loss.svg?sanitize=true" width="400%">  |  <img src="https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_accuracy.svg?sanitize=true" width="200%">
+
+
