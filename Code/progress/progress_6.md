@@ -6,11 +6,7 @@ A neural network trained on MNIST:
 * Test loss: 0.0783
 * Test accuracy: 0.9753
 
-Graph of validation and train
+Graph of validation (blue) and train (orange):
 
-
-Loss over epochs| Accuracy over epochs
-:-------------------------:|:-------------------------:
-<img src="https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_loss.svg?sanitize=true" width="400%">  |  <img src="https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_accuracy.svg?sanitize=true" width="200%">
-
-
+![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_loss.svg?sanitize=true)
+![](https://raw.githubusercontent.com/LorenzHW/Master-Thesis/master/Code/progress/pics/progress_6/epoch_accuracy.svg?sanitize=true)
