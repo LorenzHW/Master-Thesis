@@ -110,7 +110,15 @@ def ld_mnist():
                                                                 with_info=True, as_supervised=True)
 
     additional_data, labels, num_generated_examples = generate_additional_data()
-    additional_data_set = tf.data.Dataset.from_tensor_slices((additional_data, labels))
+    num_copys = 5
+    num_generated_examples *= num_copys
+    temp_additional_data = additional_data
+    temp_labels = labels
+    for i in range(num_copys):
+        temp_additional_data = tf.concat([temp_additional_data, additional_data], axis=0)
+        temp_labels = tf.concat([temp_labels, labels], axis=0)
+
+    additional_data_set = tf.data.Dataset.from_tensor_slices((temp_additional_data, temp_labels))
 
     train_batches = raw_train.map(format_example)
     train_batches = train_batches.concatenate(additional_data_set)  # Merge data sets
@@ -139,18 +147,19 @@ def ld_mnist():
 
 
 def generate_additional_data():
-    latent_rep_vals_we_want_to_generate = get_latent_representation_of_images_we_want_to_generate()
-    first_dim = tf.convert_to_tensor(latent_rep_vals_we_want_to_generate["dimension_1"])
-    second_dim = tf.convert_to_tensor(latent_rep_vals_we_want_to_generate["dimension_2"])
-    latent_rep_values = tf.stack([first_dim, second_dim], axis=1)
+    latent_rep_vals_we_want_to_generate, num_dimensions = get_latent_representation_of_images_we_want_to_generate()
+    dims_to_tensors = []
+    for dim in range(1, num_dimensions + 1):
+        dims_to_tensors.append(tf.convert_to_tensor(latent_rep_vals_we_want_to_generate["dimension_" + str(dim)]))
+    latent_rep_values = tf.stack(dims_to_tensors, axis=1)
 
     hparams = {
         "optimizer": "adam",
         "use_batch_norm": "False"
     }
-    model = CVAE(latent_dim=2, hparams=hparams, logdir_path="abc")
+    model = CVAE(latent_dim=50, hparams=hparams, logdir_path="abc")
     r = requests.get(
-        "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/mnist/v_autoencoder/logs/20191010-134910/run-0/weights/weights.zip?raw=true")
+        "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/mnist/v_autoencoder/logs/20191014-081058/run-0/weights/weights.zip?raw=true")
     z = zipfile.ZipFile(io.BytesIO(r.content))
     z.extractall()
     model.load_weights("./weights")
@@ -171,9 +180,9 @@ def get_latent_representation_of_images_we_want_to_generate():
         remote_data = np.load("temp.npy", allow_pickle=True)
         return remote_data.item()
 
-    url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/mnist/v_autoencoder/logs/20191010-134910/run-0/meta_info/values.npy?raw=true"
+    url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/mnist/v_autoencoder/logs/20191014-081058/run-0/meta_info/values.npy?raw=true"
     vae_meta_info = get_remote_data(url)
-    meta_info_key = "train_epoch_150"
+    meta_info_key = "train_epoch_100"
     y_vs_pred = vae_meta_info.get(meta_info_key + "_y_vs_pred")
     external_model_loss_raw = vae_meta_info.get(meta_info_key + "_external_model_loss_raw")
     z = vae_meta_info.get(meta_info_key + "_z")
@@ -181,7 +190,13 @@ def get_latent_representation_of_images_we_want_to_generate():
 
     data = prepare_pd_df(z, external_model_loss_raw, label, y_vs_pred)
     wrongly_classified = data[data["y_vs_pred"] == 0]
-    return wrongly_classified
+    test = wrongly_classified.copy()
+    num_dimensions = len(z[0][0])
+
+    correctly_classified = data[data["y_vs_pred"] == 1]
+    test = correctly_classified.sample(len(wrongly_classified))
+
+    return wrongly_classified, num_dimensions
 
 
 def prepare_pd_df(latent_values_batched: List[List], losses_batched: List, labels_batched, y_vs_pred_batched):
