@@ -1,4 +1,4 @@
-### MNIST classifier Without-additional-data 
+### MNIST classifier NO ADDITIONAL DATA
 
 **20191011-090725**:  
 Overfit in last epoch
