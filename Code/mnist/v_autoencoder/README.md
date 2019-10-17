@@ -14,5 +14,7 @@ Validation TL: 0.8517 Test TL: 0.8774
 EPOCHS 100
 TRAINING ONLY WITH TRIPLET LOSS
 
-20191014-170350 - Latent Dim 50 (new clf)
-TRAIN WITH ELBO AND TL
+20191017-080757 - Latent Dim 50 (saving RC loss):  
+* Training only with ELBO
+* EPOCHS: 100
+* Evaluating: 79/79 [==============================] - 9s 119ms/step - triplet_loss: 0.4794 - elbo_loss: 99.8932
