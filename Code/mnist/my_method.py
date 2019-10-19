@@ -211,10 +211,10 @@ class MyMethod:
 
         for points in max_loss_points_per_label:
             points["label_of_nearest_centroid"] = None  # Create additional column
-            points["label_of_nearest_centroid"].iloc[0] = self._determine_closest_centroid_label_for_point(
-                points.iloc[0])
-            points["label_of_nearest_centroid"].iloc[1] = self._determine_closest_centroid_label_for_point(
-                points.iloc[1])
+            column_idx = points.columns.get_loc("label_of_nearest_centroid")
+
+            points.iat[0, column_idx] = self._determine_closest_centroid_label_for_point(points.iloc[0])
+            points.iat[1, column_idx] = self._determine_closest_centroid_label_for_point(points.iloc[1])
 
         return max_loss_points_per_label
 
