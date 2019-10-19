@@ -1,15 +1,13 @@
 import os
-from typing import List
-
 import tensorflow as tf
-import tensorflow_datasets as tfds
 import numpy as np
 import collections
 import pandas as pd
 import requests, zipfile, io
 import matplotlib.pyplot as plt
-from easydict import EasyDict
-from sklearn.cluster import DBSCAN
+
+from pandas import DataFrame, Series
+from typing import List
 
 print(tf.__version__)
 print("GPU Available: ", tf.test.is_gpu_available())
@@ -86,11 +84,14 @@ class CVAE(tf.keras.Model):
             z = tf.random.normal(shape=(100, self.latent_dim))
         return self._decode(z, apply_sigmoid=True)
 
-    def generate_and_save_images(self, test_input, generate_images=False, image_prefix=""):
+    def generate_and_save_images(self, test_input, generate_images=False, label=None, generated_imgs=None):
         predictions = self._sample(test_input)
 
         if generate_images:
             for i in range(predictions.shape[0]):
+                nearest_centroid_label = generated_imgs.iloc[i]["label_of_nearest_centroid"]
+                image_prefix = "max_loss_point_label_{}_nearest_centroid_label_{}".format(label, nearest_centroid_label)
+
                 plt.subplot(1, 1, 1)
                 plt.imshow(predictions[i, :, :, 0], cmap='gray')
                 plt.axis('off')
@@ -112,6 +113,7 @@ class MyMethod:
     def __init__(self):
         self.model = self._load_variational_autoencoder()
         self.data, self.num_dimensions = self._prepare_external_metadata()
+        self.centroids = self._compute_centroids()
         pass
 
     def _load_variational_autoencoder(self):
@@ -166,19 +168,15 @@ class MyMethod:
         data = pd.DataFrame(merged)
         return data, num_dimensions
 
-    def _construct_clusters(self):
+    def _get_incorrect_classified_per_label(self) -> List[DataFrame]:
         incorrect_classified_samples = self.data[self.data["y_vs_pred"] == False]
-        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
         labels = incorrect_classified_samples["labels"].unique()
-        clusters = []
+        res = []
 
         for l in labels:
             l_incorrect_classified = incorrect_classified_samples[incorrect_classified_samples["labels"] == l]
-            db = DBSCAN(eps=10, min_samples=5).fit(l_incorrect_classified[dimension_columns])
-            l_incorrect_classified["clustered"] = db.labels_
-            main_cluster = l_incorrect_classified[l_incorrect_classified["clustered"] == 0]
-            clusters.append(main_cluster)
-        return clusters
+            res.append(l_incorrect_classified)
+        return res
 
     def _convert_dims_to_tensors(self, dataframe):
         tensors = []
@@ -186,36 +184,92 @@ class MyMethod:
             tensors.append(tf.convert_to_tensor(dataframe["dimension_" + str(dim)]))
         return tf.stack(tensors, axis=1)
 
+    def _get_max_loss_points_per_label(self, incorrect_classified_points_per_label: List[DataFrame]) -> List[DataFrame]:
+        max_loss_dfs = []
+        for df in incorrect_classified_points_per_label:
+            df = df.sort_values(by=["losses"])
+            max_loss_dfs.append(df.tail(2))
+
+        return max_loss_dfs
+
+    def _compute_centroids(self) -> List[DataFrame]:
+        labels = self.data["labels"].unique()
+        centroids_for_labels = []
+
+        for l in labels:
+            centroid = pd.DataFrame({
+                "label": [l]
+            })
+            data_for_label = self.data[self.data["labels"] == l]
+            for n in range(1, self.num_dimensions + 1):
+                mean_of_dimension = data_for_label["dimension_" + str(n)].mean()
+                centroid["dimension_" + str(n)] = mean_of_dimension
+            centroids_for_labels.append(centroid)
+        return centroids_for_labels
+
+    def _add_label_of_closest_centroid_for_points(self, max_loss_points_per_label: List[DataFrame]):
+
+        for points in max_loss_points_per_label:
+            points["label_of_nearest_centroid"] = None  # Create additional column
+            points["label_of_nearest_centroid"].iloc[0] = self._determine_closest_centroid_label_for_point(
+                points.iloc[0])
+            points["label_of_nearest_centroid"].iloc[1] = self._determine_closest_centroid_label_for_point(
+                points.iloc[1])
+
+        return max_loss_points_per_label
+
+    def _determine_closest_centroid_label_for_point(self, p: Series) -> int:
+        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
+        curr_min_distance, curr_label = float("inf"), None
+        for idx, c in enumerate(self.centroids):
+            l2_distance = np.linalg.norm(c[dimension_columns].to_numpy() - p[dimension_columns].to_numpy())
+            if l2_distance < curr_min_distance:
+                curr_min_distance = l2_distance
+                curr_label = c["label"][0]
+        return curr_label
+
+    def _walk_from_first_point_to_second_point(self, points: DataFrame) -> DataFrame:
+        res = []
+        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
+        first_point, second_point = points.iloc[0], points.iloc[1]
+        direction_vector = second_point[dimension_columns] - first_point[dimension_columns]
+        length_direction_vector = np.linalg.norm(direction_vector)
+        unit_vector = 1 / np.linalg.norm(direction_vector) * direction_vector
+
+        num_examples_to_generate = 5
+        step_size = length_direction_vector / num_examples_to_generate
+        for i in range(num_examples_to_generate):
+            generated_sample = first_point[dimension_columns] + i * step_size * unit_vector
+            closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
+            generated_sample["label_of_nearest_centroid"] = closest_centroid
+            res.append(generated_sample)
+        res.append(second_point[dimension_columns + ["label_of_nearest_centroid"]])
+        res = pd.DataFrame(res)
+        return res
+
     def generate_data(self):
-        clusters = self._construct_clusters()
-        maxed_clusters = self.max_based_on_external_clf(clusters)
-        zs = []
-        for c in maxed_clusters:
-            zs.append(self._convert_dims_to_tensors(c))
+        incorrect_classified_per_label = self._get_incorrect_classified_per_label()
+        max_loss_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
+        max_loss_points_per_label = self._add_label_of_closest_centroid_for_points(max_loss_points_per_label)
 
-        xs, ys = [], []
-        for i, z in enumerate(zs):
-            curr_label = str(clusters[i]["labels"].unique()[0])
+        xs, ys, generate_png = [], [], False
+        for cur_max_loss_p in max_loss_points_per_label:
+            cur_label = cur_max_loss_p.iloc[0]["labels"]
+            z_df = self._walk_from_first_point_to_second_point(cur_max_loss_p)
+            z = self._convert_dims_to_tensors(z_df)
+            if generate_png:
+                images = self.model.generate_and_save_images(z, True, cur_label, z_df)
+            else:
+                images = self.model.generate_and_save_images(z)
+            labels = tf.convert_to_tensor(
+                [int(z_df.iloc[i]["label_of_nearest_centroid"]) for i in range(z_df.shape[0])], dtype=tf.int64
+            )
+            for j, img in enumerate(images):  # Flatten
+                xs.append(img)
+                ys.append(labels[j])
 
-            images = self.model.generate_and_save_images(z, True, "cluser_with_label_" + curr_label)
-            labels = tf.convert_to_tensor(clusters[i]["labels"], dtype=tf.int64)
-            # for j, img in enumerate(images): # Flatten
-            #     xs.append(img)
-            #     ys.append(labels[j])
-            print("HELLO WORLD")
-
-        xs = np.array(xs).flatten()
-        ys = np.array(ys).flatten()
         num_generated_examples = len(xs)
         return xs, ys, num_generated_examples
-
-    def max_based_on_external_clf(self, clusters):
-        maxed_clusters = []
-        for c in clusters:
-            c = c.sort_values(by=["losses"])
-            maxed_clusters.append(c.tail(3))
-
-        return maxed_clusters
 
 
 def main():
