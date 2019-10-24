@@ -110,10 +110,11 @@ class CVAE(tf.keras.Model):
 
 
 class MyMethod:
-    def __init__(self):
+    def __init__(self, num_samples_to_generate):
         self.model = self._load_variational_autoencoder()
         self.data, self.num_dimensions = self._prepare_external_metadata()
         self.centroids = self._compute_centroids()
+        self.num_samples_to_generate = num_samples_to_generate
         pass
 
     def _load_variational_autoencoder(self):
@@ -123,7 +124,7 @@ class MyMethod:
         }
         model = CVAE(latent_dim=50, hparams=hparams, logdir_path="abc")
         r = requests.get(
-            "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/mnist/v_autoencoder/logs/20191017-080757/run-0/weights/weights.zip?raw=true")
+            "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-094817/run-0/weights/weights.zip?raw=true")
         z = zipfile.ZipFile(io.BytesIO(r.content))
         z.extractall()
         model.load_weights("./weights")
@@ -139,7 +140,7 @@ class MyMethod:
             remote_data = np.load("meta_info.npy", allow_pickle=True)
             return remote_data.item()
 
-        meta_info_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/mnist/v_autoencoder/logs/20191017-080757/run-0/meta_info/values.npy?raw=true"
+        meta_info_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-094817/run-0/meta_info/values.npy?raw=true"
         vae_meta_info, meta_info_key = get_remote_data(meta_info_url), "train_epoch_100"
         y_vs_pred_batched = vae_meta_info.get(meta_info_key + "_y_vs_pred")
         external_model_loss_raw_batched = vae_meta_info.get(meta_info_key + "_external_model_loss_raw")
@@ -192,6 +193,27 @@ class MyMethod:
 
         return max_loss_dfs
 
+    def biggest_spread_from_max_loss_point(self, incorrect_points_per_label: List[DataFrame]) -> List[DataFrame]:
+        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
+        res = []
+
+        for df in incorrect_points_per_label:
+            df = df.sort_values(by=["losses"])
+            max_loss_point = df.tail(1)
+
+            cur_max_distance = float("-inf")
+            cur_max_idx = 0
+            points = df[dimension_columns].to_numpy()
+            for idx, p in enumerate(points):
+                l2_distance = np.linalg.norm(max_loss_point[dimension_columns].to_numpy()[0] - p)
+                if l2_distance > cur_max_distance:
+                    cur_max_distance = l2_distance
+                    cur_max_idx = idx
+            furthest_away = df.iloc[[cur_max_idx]]
+            combined = pd.concat([max_loss_point, furthest_away])
+            res.append(combined)
+        return res
+
     def _compute_centroids(self) -> List[DataFrame]:
         labels = self.data["labels"].unique()
         centroids_for_labels = []
@@ -212,7 +234,6 @@ class MyMethod:
         for points in max_loss_points_per_label:
             points["label_of_nearest_centroid"] = None  # Create additional column
             column_idx = points.columns.get_loc("label_of_nearest_centroid")
-
             points.iat[0, column_idx] = self._determine_closest_centroid_label_for_point(points.iloc[0])
             points.iat[1, column_idx] = self._determine_closest_centroid_label_for_point(points.iloc[1])
 
@@ -222,7 +243,7 @@ class MyMethod:
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
         curr_min_distance, curr_label = float("inf"), None
         for idx, c in enumerate(self.centroids):
-            l2_distance = np.linalg.norm(c[dimension_columns].to_numpy() - p[dimension_columns].to_numpy())
+            l2_distance = np.linalg.norm(c[dimension_columns].to_numpy()[0] - p[dimension_columns].to_numpy())
             if l2_distance < curr_min_distance:
                 curr_min_distance = l2_distance
                 curr_label = c["label"][0]
@@ -236,9 +257,8 @@ class MyMethod:
         length_direction_vector = np.linalg.norm(direction_vector)
         unit_vector = 1 / np.linalg.norm(direction_vector) * direction_vector
 
-        num_examples_to_generate = 5
-        step_size = length_direction_vector / num_examples_to_generate
-        for i in range(num_examples_to_generate):
+        step_size = length_direction_vector / self.num_samples_to_generate
+        for i in range(self.num_samples_to_generate):
             generated_sample = first_point[dimension_columns] + i * step_size * unit_vector
             closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
             generated_sample["label_of_nearest_centroid"] = closest_centroid
@@ -249,7 +269,8 @@ class MyMethod:
 
     def generate_data(self):
         incorrect_classified_per_label = self._get_incorrect_classified_per_label()
-        max_loss_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
+        max_loss_points_per_label = self.biggest_spread_from_max_loss_point(incorrect_classified_per_label)
+        # max_loss_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
         max_loss_points_per_label = self._add_label_of_closest_centroid_for_points(max_loss_points_per_label)
 
         xs, ys, generate_png = [], [], False
@@ -273,7 +294,7 @@ class MyMethod:
 
 
 def main():
-    m = MyMethod()
+    m = MyMethod(10)
     m.generate_data()
 
 
