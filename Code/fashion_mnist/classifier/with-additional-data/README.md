@@ -30,3 +30,9 @@
 * Method: archimedian spiral
 * NUM TRAIN: 56500.0
 * 78/78 [==============================] - 3s 38ms/step - loss: 0.3313 - accuracy: 0.8898
+
+* Mini success: 20191025-094910
+* Method: random sample in specific area:
+* NUM TRAIN: 59000.0
+* Best epoch: 21s 45ms/step - loss: 0.2148 - accuracy: 0.9208 - val_loss: 0.3126 - val_accuracy: 0.8962
+* 78/78 [==============================] - 3s 37ms/step - loss: 0.3381 - accuracy: 0.8906
