@@ -5,6 +5,7 @@ import collections
 import pandas as pd
 import requests, zipfile, io
 import matplotlib.pyplot as plt
+from math import pi, sin, cos
 
 from pandas import DataFrame, Series
 from typing import List
@@ -124,7 +125,7 @@ class MyMethod:
         }
         model = CVAE(latent_dim=50, hparams=hparams, logdir_path="abc")
         r = requests.get(
-            "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-094817/run-0/weights/weights.zip?raw=true")
+            "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-123351/run-0/weights/weights.zip?raw=true")
         z = zipfile.ZipFile(io.BytesIO(r.content))
         z.extractall()
         model.load_weights("./weights")
@@ -140,7 +141,7 @@ class MyMethod:
             remote_data = np.load("meta_info.npy", allow_pickle=True)
             return remote_data.item()
 
-        meta_info_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-094817/run-0/meta_info/values.npy?raw=true"
+        meta_info_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-123351/run-0/meta_info/values.npy?raw=true"
         vae_meta_info, meta_info_key = get_remote_data(meta_info_url), "train_epoch_100"
         y_vs_pred_batched = vae_meta_info.get(meta_info_key + "_y_vs_pred")
         external_model_loss_raw_batched = vae_meta_info.get(meta_info_key + "_external_model_loss_raw")
@@ -214,6 +215,22 @@ class MyMethod:
             res.append(combined)
         return res
 
+    def biggest_spread_on_entire_latent_rep(self, incorrect_points_per_label: List[DataFrame]) -> List[DataFrame]:
+        res = []
+        for df in incorrect_points_per_label:
+            incorrect_points = df.to_numpy()
+            idxs_of_max_points = [0, 0]
+            curr_max_distance = float("-inf")
+            for idx1, p1 in enumerate(incorrect_points):
+                for idx2, p2 in enumerate(incorrect_points):
+                    l2_distance = np.linalg.norm(p1 - p2)
+                    if l2_distance > curr_max_distance:
+                        curr_max_distance = l2_distance
+                        idxs_of_max_points = [idx1, idx2]
+            combined = pd.concat([df.iloc[[idxs_of_max_points[0]]], df.iloc[[idxs_of_max_points[1]]]])
+            res.append(combined)
+        return res
+
     def _compute_centroids(self) -> List[DataFrame]:
         labels = self.data["labels"].unique()
         centroids_for_labels = []
@@ -249,6 +266,27 @@ class MyMethod:
                 curr_label = c["label"][0]
         return curr_label
 
+    def _walk_archimedean_spiral_from_max_loss_point(self, points: DataFrame) -> DataFrame:
+        max_loss_point = points.iloc[0]
+        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
+        res = []
+
+        for i in range(self.num_samples_to_generate):
+            t = i / 300 * pi
+            x = (1 + 5 * t) * cos(t)
+            y = (1 + 5 * t) * sin(t)
+
+            generated_sample = max_loss_point[dimension_columns]
+
+            generated_sample.at["dimension_1"] = x
+            generated_sample.at["dimension_2"] = y
+            closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
+            generated_sample["label_of_nearest_centroid"] = closest_centroid
+            res.append(generated_sample)
+
+        res = pd.DataFrame(res)
+        return res
+
     def _walk_from_first_point_to_second_point(self, points: DataFrame) -> DataFrame:
         res = []
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
@@ -269,14 +307,16 @@ class MyMethod:
 
     def generate_data(self):
         incorrect_classified_per_label = self._get_incorrect_classified_per_label()
-        max_loss_points_per_label = self.biggest_spread_from_max_loss_point(incorrect_classified_per_label)
-        # max_loss_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
+        # max_loss_points_per_label = self.biggest_spread_from_max_loss_point(incorrect_classified_per_label)
+        # max_loss_points_per_label = self.biggest_spread_on_entire_latent_rep(incorrect_classified_per_label)
+        max_loss_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
         max_loss_points_per_label = self._add_label_of_closest_centroid_for_points(max_loss_points_per_label)
 
         xs, ys, generate_png = [], [], False
         for cur_max_loss_p in max_loss_points_per_label:
             cur_label = cur_max_loss_p.iloc[0]["labels"]
-            z_df = self._walk_from_first_point_to_second_point(cur_max_loss_p)
+            z_df = self._walk_archimedean_spiral_from_max_loss_point(cur_max_loss_p)
+            # z_df = self._walk_from_first_point_to_second_point(cur_max_loss_p)
             z = self._convert_dims_to_tensors(z_df)
             if generate_png:
                 images = self.model.generate_and_save_images(z, True, cur_label, z_df)
