@@ -267,7 +267,7 @@ class MyMethod:
         return curr_label
 
     def _walk_archimedean_spiral_from_max_loss_point(self, points: DataFrame) -> DataFrame:
-        max_loss_point = points.iloc[0]
+        max_loss_point = points.iloc[1]
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
         res = []
 
@@ -305,6 +305,22 @@ class MyMethod:
         res = pd.DataFrame(res)
         return res
 
+    def _generate_random_point_in_specific_range(self, points: DataFrame) -> DataFrame:
+        res = []
+        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
+        max_loss_point = points.iloc[1]
+        specified_range = 0.85
+
+        for _ in range(self.num_samples_to_generate):
+            generated_sample = max_loss_point[dimension_columns]
+            for j in range(1, self.num_dimensions + 1):
+                generated_sample.at["dimension_" + str(j)] += np.random.uniform(-specified_range, specified_range)
+            closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
+            generated_sample["label_of_nearest_centroid"] = closest_centroid
+            res.append(generated_sample)
+        res = pd.DataFrame(res)
+        return res
+
     def generate_data(self):
         incorrect_classified_per_label = self._get_incorrect_classified_per_label()
         # max_loss_points_per_label = self.biggest_spread_from_max_loss_point(incorrect_classified_per_label)
@@ -315,8 +331,9 @@ class MyMethod:
         xs, ys, generate_png = [], [], False
         for cur_max_loss_p in max_loss_points_per_label:
             cur_label = cur_max_loss_p.iloc[0]["labels"]
-            z_df = self._walk_archimedean_spiral_from_max_loss_point(cur_max_loss_p)
+            # z_df = self._walk_archimedean_spiral_from_max_loss_point(cur_max_loss_p)
             # z_df = self._walk_from_first_point_to_second_point(cur_max_loss_p)
+            z_df = self._generate_random_point_in_specific_range(cur_max_loss_p)
             z = self._convert_dims_to_tensors(z_df)
             if generate_png:
                 images = self.model.generate_and_save_images(z, True, cur_label, z_df)
