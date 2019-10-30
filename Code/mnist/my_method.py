@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from math import pi, sin, cos
 
 from pandas import DataFrame, Series
-from typing import List
+from typing import List, Dict
 
 print(tf.__version__)
 print("GPU Available: ", tf.test.is_gpu_available())
@@ -111,12 +111,13 @@ class CVAE(tf.keras.Model):
 
 
 class MyMethod:
-    def __init__(self, num_samples_to_generate):
+    def __init__(self, num_samples_to_generate, option):
+        self.num_samples_to_generate = num_samples_to_generate
+        self.option = option
+        self.vae_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191025-082231/run-0/"
         self.model = self._load_variational_autoencoder()
         self.data, self.num_dimensions = self._prepare_external_metadata()
         self.centroids = self._compute_centroids()
-        self.num_samples_to_generate = num_samples_to_generate
-        pass
 
     def _load_variational_autoencoder(self):
         hparams = {
@@ -124,8 +125,7 @@ class MyMethod:
             "use_batch_norm": "False"
         }
         model = CVAE(latent_dim=50, hparams=hparams, logdir_path="abc")
-        r = requests.get(
-            "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-123351/run-0/weights/weights.zip?raw=true")
+        r = requests.get(self.vae_url + "weights/weights.zip?raw=true")
         z = zipfile.ZipFile(io.BytesIO(r.content))
         z.extractall()
         model.load_weights("./weights")
@@ -141,7 +141,7 @@ class MyMethod:
             remote_data = np.load("meta_info.npy", allow_pickle=True)
             return remote_data.item()
 
-        meta_info_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191024-123351/run-0/meta_info/values.npy?raw=true"
+        meta_info_url = self.vae_url + "meta_info/values.npy?raw=true"
         vae_meta_info, meta_info_key = get_remote_data(meta_info_url), "train_epoch_100"
         y_vs_pred_batched = vae_meta_info.get(meta_info_key + "_y_vs_pred")
         external_model_loss_raw_batched = vae_meta_info.get(meta_info_key + "_external_model_loss_raw")
@@ -186,7 +186,8 @@ class MyMethod:
             tensors.append(tf.convert_to_tensor(dataframe["dimension_" + str(dim)]))
         return tf.stack(tensors, axis=1)
 
-    def _get_max_loss_points_per_label(self, incorrect_classified_points_per_label: List[DataFrame]) -> List[DataFrame]:
+    @staticmethod
+    def _get_max_loss_points_per_label(incorrect_classified_points_per_label: List[DataFrame]) -> List[DataFrame]:
         max_loss_dfs = []
         for df in incorrect_classified_points_per_label:
             df = df.sort_values(by=["losses"])
@@ -215,7 +216,8 @@ class MyMethod:
             res.append(combined)
         return res
 
-    def biggest_spread_on_entire_latent_rep(self, incorrect_points_per_label: List[DataFrame]) -> List[DataFrame]:
+    @staticmethod
+    def biggest_spread_on_entire_latent_rep(incorrect_points_per_label: List[DataFrame]) -> List[DataFrame]:
         res = []
         for df in incorrect_points_per_label:
             incorrect_points = df.to_numpy()
@@ -266,8 +268,7 @@ class MyMethod:
                 curr_label = c["label"][0]
         return curr_label
 
-    def _walk_archimedean_spiral_from_max_loss_point(self, points: DataFrame) -> DataFrame:
-        max_loss_point = points.iloc[1]
+    def _walk_archimedean_spiral_from_anchor_point(self, anchor_point: Series) -> DataFrame:
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
         res = []
 
@@ -276,10 +277,10 @@ class MyMethod:
             x = (1 + 5 * t) * cos(t)
             y = (1 + 5 * t) * sin(t)
 
-            generated_sample = max_loss_point[dimension_columns]
+            generated_sample = anchor_point[dimension_columns]
 
-            generated_sample.at["dimension_1"] = x
-            generated_sample.at["dimension_2"] = y
+            generated_sample.at["dimension_1"] += x
+            generated_sample.at["dimension_2"] += y
             closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
             generated_sample["label_of_nearest_centroid"] = closest_centroid
             res.append(generated_sample)
@@ -287,10 +288,10 @@ class MyMethod:
         res = pd.DataFrame(res)
         return res
 
-    def _walk_from_first_point_to_second_point(self, points: DataFrame) -> DataFrame:
+    def _walk_from_anchor_point_to_anchor_point(self, anchor_points: DataFrame) -> DataFrame:
         res = []
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
-        first_point, second_point = points.iloc[0], points.iloc[1]
+        first_point, second_point = anchor_points.iloc[0], anchor_points.iloc[1]
         direction_vector = second_point[dimension_columns] - first_point[dimension_columns]
         length_direction_vector = np.linalg.norm(direction_vector)
         unit_vector = 1 / np.linalg.norm(direction_vector) * direction_vector
@@ -305,14 +306,13 @@ class MyMethod:
         res = pd.DataFrame(res)
         return res
 
-    def _generate_random_point_in_specific_range(self, points: DataFrame) -> DataFrame:
+    def _generate_random_points_in_specific_range_for_single_point(self, anchor_point: Series) -> DataFrame:
         res = []
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
-        max_loss_point = points.iloc[1]
         specified_range = 0.85
 
         for _ in range(self.num_samples_to_generate):
-            generated_sample = max_loss_point[dimension_columns]
+            generated_sample = anchor_point[dimension_columns]
             for j in range(1, self.num_dimensions + 1):
                 generated_sample.at["dimension_" + str(j)] += np.random.uniform(-specified_range, specified_range)
             closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
@@ -321,19 +321,43 @@ class MyMethod:
         res = pd.DataFrame(res)
         return res
 
+    def _generate_random_points_in_specific_range_for_all_point(self, points: DataFrame) -> DataFrame:
+        res = []
+        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
+        specified_range = 0.85
+
+        for i in range(len(points)):
+            for _ in range(self.num_samples_to_generate // len(points)):
+                max_loss_point = points.iloc[i]
+                generated_sample = max_loss_point[dimension_columns]
+                for j in range(1, self.num_dimensions + 1):
+                    generated_sample.at["dimension_" + str(j)] += np.random.uniform(-specified_range, specified_range)
+                closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
+                generated_sample["label_of_nearest_centroid"] = closest_centroid
+                res.append(generated_sample)
+        res = pd.DataFrame(res)
+        return res
+
     def generate_data(self):
         incorrect_classified_per_label = self._get_incorrect_classified_per_label()
-        # max_loss_points_per_label = self.biggest_spread_from_max_loss_point(incorrect_classified_per_label)
-        # max_loss_points_per_label = self.biggest_spread_on_entire_latent_rep(incorrect_classified_per_label)
-        max_loss_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
-        max_loss_points_per_label = self._add_label_of_closest_centroid_for_points(max_loss_points_per_label)
+        # anchor_points_per_label = self.biggest_spread_from_max_loss_point(incorrect_classified_per_label)
+
+        if self.option in ["highest_loss_walk", "archimedean_spiral_walk", "generate_in_range_for_single_point"]:
+            anchor_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
+        elif self.option in ["biggest_spread_walk"]:
+            anchor_points_per_label = self.biggest_spread_on_entire_latent_rep(incorrect_classified_per_label)
+        anchor_points_per_label = self._add_label_of_closest_centroid_for_points(anchor_points_per_label)
 
         xs, ys, generate_png = [], [], False
-        for cur_max_loss_p in max_loss_points_per_label:
-            cur_label = cur_max_loss_p.iloc[0]["labels"]
-            # z_df = self._walk_archimedean_spiral_from_max_loss_point(cur_max_loss_p)
-            # z_df = self._walk_from_first_point_to_second_point(cur_max_loss_p)
-            z_df = self._generate_random_point_in_specific_range(cur_max_loss_p)
+        for anchor_points in anchor_points_per_label:
+            cur_label = anchor_points.iloc[0]["labels"]
+
+            if self.option == "archimedean_spiral_walk":
+                z_df = self._walk_archimedean_spiral_from_anchor_point(anchor_points.iloc[-1])
+            elif self.option in ["highest_loss_walk", "biggest_spread_walk"]:
+                z_df = self._walk_from_anchor_point_to_anchor_point(anchor_points)
+            elif self.option == "generate_in_range_for_single_point":
+                z_df = self._generate_random_points_in_specific_range_for_single_point(anchor_points.iloc[-1])
             z = self._convert_dims_to_tensors(z_df)
             if generate_png:
                 images = self.model.generate_and_save_images(z, True, cur_label, z_df)
@@ -351,7 +375,9 @@ class MyMethod:
 
 
 def main():
-    m = MyMethod(10)
+    possible_options = ["highest_loss_walk", "biggest_spread_walk", "archimedean_spiral_walk",
+                        "generate_in_range_for_single_point"]
+    m = MyMethod(10, option=possible_options[2])
     m.generate_data()
 
 
