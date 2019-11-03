@@ -82,7 +82,7 @@ class CVAE(tf.keras.Model):
 
     def _sample(self, z=None):
         if z is None:
-            z = tf.random.normal(shape=(100, self.latent_dim))
+            z = tf.random.normal(shape=(10, self.latent_dim))
         return self._decode(z, apply_sigmoid=True)
 
     def generate_and_save_images(self, test_input, generate_images=False, label=None, generated_imgs=None):
@@ -96,9 +96,10 @@ class CVAE(tf.keras.Model):
                 plt.subplot(1, 1, 1)
                 plt.imshow(predictions[i, :, :, 0], cmap='gray')
                 plt.axis('off')
-                if not os.path.isdir("./images"):
-                    os.mkdir("./images")
-                plt.savefig('images/{}_image_{}.png'.format(image_prefix, i))
+                if not os.path.isdir("./downloaded/images"):
+                    os.mkdir("./downloaded/images")
+                plt.savefig('./downloaded/images/{}_image_{}.png'.format(image_prefix, i), bbox_inches='tight',
+                            pad_inches=0)
 
         return predictions
 
@@ -124,11 +125,11 @@ class MyMethod:
             "optimizer": "adam",
             "use_batch_norm": "False"
         }
-        model = CVAE(latent_dim=50, hparams=hparams, logdir_path="abc")
+        model = CVAE(latent_dim=50, hparams=hparams, logdir_path="logs")
         r = requests.get(self.vae_url + "weights/weights.zip?raw=true")
         z = zipfile.ZipFile(io.BytesIO(r.content))
-        z.extractall()
-        model.load_weights("./weights")
+        z.extractall("./downloaded")
+        model.load_weights("./downloaded/weights")
         return model
 
     def _load_external_metadata(self):
@@ -136,9 +137,9 @@ class MyMethod:
             import requests
             import shutil
             response = requests.get(url, stream=True)
-            with open('meta_info.npy', 'wb') as fin:
+            with open('./downloaded/meta_info.npy', 'wb') as fin:
                 shutil.copyfileobj(response.raw, fin)
-            remote_data = np.load("meta_info.npy", allow_pickle=True)
+            remote_data = np.load("./downloaded/meta_info.npy", allow_pickle=True)
             return remote_data.item()
 
         meta_info_url = self.vae_url + "meta_info/values.npy?raw=true"
@@ -377,7 +378,7 @@ class MyMethod:
 def main():
     possible_options = ["highest_loss_walk", "biggest_spread_walk", "archimedean_spiral_walk",
                         "generate_in_range_for_single_point"]
-    m = MyMethod(10, option=possible_options[2])
+    m = MyMethod(num_samples_to_generate=5, option=possible_options[0])
     m.generate_data()
 
 
