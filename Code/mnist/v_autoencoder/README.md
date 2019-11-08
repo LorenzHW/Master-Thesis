@@ -3,8 +3,8 @@
 * TRIPLET LOSS ONLY
 * EPOCHS 100
 
-20191108-075124
+20191108-094553
 * 50 Dim
 * ELBO only
-* 600-700 epochs
-* 79/79 [==============================] - 9s 118ms/step - triplet_loss: 0.4273 - elbo_loss: 95.7259
+* 700-800 epochs
+* 79/79 [==============================] - 9s 113ms/step - triplet_loss: 0.4620 - elbo_loss: 95.6416
