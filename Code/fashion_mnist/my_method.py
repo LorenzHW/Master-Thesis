@@ -7,11 +7,140 @@ import requests, zipfile, io
 import matplotlib.pyplot as plt
 from math import pi, sin, cos
 
+import tensorflow_datasets as tfds
+from easydict import EasyDict
 from pandas import DataFrame, Series
 from typing import List, Dict
+from datetime import datetime
 
 print(tf.__version__)
 print("GPU Available: ", tf.test.is_gpu_available())
+
+"""The Fast Gradient Method attack."""
+
+
+def fast_gradient_method(model_fn, x, eps, norm, clip_min=None, clip_max=None, y=None,
+                         targeted=False, sanity_checks=False):
+    """
+    Tensorflow 2.0 implementation of the Fast Gradient Method.
+    :param model_fn: a callable that takes an input tensor and returns the model logits.
+    :param x: input tensor.
+    :param eps: epsilon (input variation parameter); see https://arxiv.org/abs/1412.6572.
+    :param norm: Order of the norm (mimics NumPy). Possible values: np.inf, 1 or 2.
+    :param clip_min: (optional) float. Minimum float value for adversarial example components.
+    :param clip_max: (optional) float. Maximum float value for adversarial example components.
+    :param y: (optional) Tensor with true labels. If targeted is true, then provide the
+              target label. Otherwise, only provide this parameter if you'd like to use true
+              labels when crafting adversarial samples. Otherwise, model predictions are used
+              as labels to avoid the "label leaking" effect (explained in this paper:
+              https://arxiv.org/abs/1611.01236). Default is None.
+    :param targeted: (optional) bool. Is the attack targeted or untargeted?
+              Untargeted, the default, will try to make the label incorrect.
+              Targeted will instead try to move in the direction of being more like y.
+    :param sanity_checks: bool, if True, include asserts (Turn them off to use less runtime /
+              memory or for unit tests that intentionally pass strange input)
+    :return: a tensor for the adversarial example
+    """
+    if norm not in [np.inf, 1, 2]:
+        raise ValueError("Norm order must be either np.inf, 1, or 2.")
+
+    asserts = []
+
+    # If a data range was specified, check that the input was in that range
+    if clip_min is not None:
+        asserts.append(tf.math.greater_equal(x, clip_min))
+
+    if clip_max is not None:
+        asserts.append(tf.math.less_equal(x, clip_max))
+
+    if y is None:
+        # Using model predictions as ground truth to avoid label leaking
+        y = tf.argmax(model_fn(x), 1)
+
+    grad = compute_gradient(model_fn, x, y, targeted)
+
+    optimal_perturbation = optimize_linear(grad, eps, norm)
+    # Add perturbation to original example to obtain adversarial example
+    adv_x = x + optimal_perturbation
+
+    # If clipping is needed, reset all values outside of [clip_min, clip_max]
+    if (clip_min is not None) or (clip_max is not None):
+        # We don't currently support one-sided clipping
+        assert clip_min is not None and clip_max is not None
+        adv_x = tf.clip_by_value(adv_x, clip_min, clip_max)
+
+    if sanity_checks:
+        assert np.all(asserts)
+    return adv_x
+
+
+# Due to performance reasons, this function is wrapped inside of tf.function decorator.
+# Not using the decorator here, or letting the user wrap the attack in tf.function is way
+# slower on Tensorflow 2.0.0-alpha0.
+@tf.function
+def compute_gradient(model_fn, x, y, targeted):
+    """
+    Computes the gradient of the loss with respect to the input tensor.
+    :param model_fn: a callable that takes an input tensor and returns the model logits.
+    :param x: input tensor
+    :param y: Tensor with true labels. If targeted is true, then provide the target label.
+    :param targeted:  bool. Is the attack targeted or untargeted? Untargeted, the default, will
+                      try to make the label incorrect. Targeted will instead try to move in the
+                      direction of being more like y.
+    :return: A tensor containing the gradient of the loss with respect to the input tensor.
+    """
+    loss_fn = tf.nn.sparse_softmax_cross_entropy_with_logits
+    with tf.GradientTape() as g:
+        g.watch(x)
+        # Compute loss
+        loss = loss_fn(labels=y, logits=model_fn(x))
+        if targeted:  # attack is targeted, minimize loss of target label rather than maximize loss of correct label
+            loss = -loss
+
+    # Define gradient of loss wrt input
+    grad = g.gradient(loss, x)
+    return grad
+
+
+def optimize_linear(grad, eps, norm=np.inf):
+    """
+    Solves for the optimal input to a linear function under a norm constraint.
+
+    Optimal_perturbation = argmax_{eta, ||eta||_{norm} < eps} dot(eta, grad)
+
+    :param grad: tf tensor containing a batch of gradients
+    :param eps: float scalar specifying size of constraint region
+    :param norm: int specifying order of norm
+    :returns:
+      tf tensor containing optimal perturbation
+    """
+
+    # Convert the iterator returned by `range` into a list.
+    axis = list(range(1, len(grad.get_shape())))
+    avoid_zero_div = 1e-12
+    if norm == np.inf:
+        # Take sign of gradient
+        optimal_perturbation = tf.sign(grad)
+        # The following line should not change the numerical results. It applies only because
+        # `optimal_perturbation` is the output of a `sign` op, which has zero derivative anyway.
+        # It should not be applied for the other norms, where the perturbation has a non-zero derivative.
+        optimal_perturbation = tf.stop_gradient(optimal_perturbation)
+    elif norm == 1:
+        abs_grad = tf.abs(grad)
+        sign = tf.sign(grad)
+        max_abs_grad = tf.reduce_max(abs_grad, axis, keepdims=True)
+        tied_for_max = tf.dtypes.cast(tf.equal(abs_grad, max_abs_grad), dtype=tf.float32)
+        num_ties = tf.reduce_sum(tied_for_max, axis, keepdims=True)
+        optimal_perturbation = sign * tied_for_max / num_ties
+    elif norm == 2:
+        square = tf.maximum(avoid_zero_div, tf.reduce_sum(tf.square(grad), axis, keepdims=True))
+        optimal_perturbation = grad / tf.sqrt(square)
+    else:
+        raise NotImplementedError("Only L-inf, L1 and L2 norms are currently implemented.")
+
+    # Scale perturbation to be the solution for the norm=eps rather than norm=1 problem
+    scaled_perturbation = tf.multiply(eps, optimal_perturbation)
+    return scaled_perturbation
 
 
 # Convolutional Variational Autoencoder
@@ -82,7 +211,7 @@ class CVAE(tf.keras.Model):
 
     def _sample(self, z=None):
         if z is None:
-            z = tf.random.normal(shape=(10, self.latent_dim))
+            z = tf.random.normal(shape=(100, self.latent_dim))
         return self._decode(z, apply_sigmoid=True)
 
     def generate_and_save_images(self, test_input, generate_images=False, label=None, generated_imgs=None):
@@ -115,7 +244,7 @@ class MyMethod:
     def __init__(self, num_samples_to_generate, option):
         self.num_samples_to_generate = num_samples_to_generate
         self.option = option
-        self.vae_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/fashion_mnist/v_autoencoder/logs/20191025-082231/run-0/"
+        self.vae_url = "https://github.com/LorenzHW/Master-Thesis/blob/master/Code/mnist/v_autoencoder/logs/20191111-173200/run-0/"
         self.model = self._load_variational_autoencoder()
         self.data, self.num_dimensions = self._prepare_external_metadata()
         self.centroids = self._compute_centroids()
@@ -292,7 +421,7 @@ class MyMethod:
     def _walk_from_anchor_point_to_anchor_point(self, anchor_points: DataFrame) -> DataFrame:
         res = []
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
-        first_point, second_point = anchor_points.iloc[0], anchor_points.iloc[1]
+        first_point, second_point = anchor_points.iloc[1], anchor_points.iloc[0]
         direction_vector = second_point[dimension_columns] - first_point[dimension_columns]
         length_direction_vector = np.linalg.norm(direction_vector)
         unit_vector = 1 / np.linalg.norm(direction_vector) * direction_vector
@@ -303,14 +432,13 @@ class MyMethod:
             closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
             generated_sample["label_of_nearest_centroid"] = closest_centroid
             res.append(generated_sample)
-        res.append(second_point[dimension_columns + ["label_of_nearest_centroid"]])
         res = pd.DataFrame(res)
         return res
 
     def _generate_random_points_in_specific_range_for_single_point(self, anchor_point: Series) -> DataFrame:
         res = []
         dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
-        specified_range = 0.85
+        specified_range = 0.5
 
         for _ in range(self.num_samples_to_generate):
             generated_sample = anchor_point[dimension_columns]
@@ -319,23 +447,6 @@ class MyMethod:
             closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
             generated_sample["label_of_nearest_centroid"] = closest_centroid
             res.append(generated_sample)
-        res = pd.DataFrame(res)
-        return res
-
-    def _generate_random_points_in_specific_range_for_all_point(self, points: DataFrame) -> DataFrame:
-        res = []
-        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
-        specified_range = 0.85
-
-        for i in range(len(points)):
-            for _ in range(self.num_samples_to_generate // len(points)):
-                max_loss_point = points.iloc[i]
-                generated_sample = max_loss_point[dimension_columns]
-                for j in range(1, self.num_dimensions + 1):
-                    generated_sample.at["dimension_" + str(j)] += np.random.uniform(-specified_range, specified_range)
-                closest_centroid = self._determine_closest_centroid_label_for_point(generated_sample)
-                generated_sample["label_of_nearest_centroid"] = closest_centroid
-                res.append(generated_sample)
         res = pd.DataFrame(res)
         return res
 
@@ -375,12 +486,105 @@ class MyMethod:
         return xs, ys, num_generated_examples
 
 
+def ld_mnist(use_vae_to_generate_data=False, samples_to_generate_per_label=250, option="archimedean_spiral_walk"):
+    def format_example(image, label):
+        image = tf.cast(image, tf.float32)
+        image /= 255
+        return image, label
+
+    BATCH_SIZE = 128
+    train_split_weights = (9, 1)
+    train_split = tfds.Split.TRAIN.subsplit(weighted=train_split_weights)
+    test_split = tfds.Split.TEST.subsplit(weighted=(1,))
+    (raw_train, raw_validation, raw_test), metadata = tfds.load('mnist', split=list(train_split + test_split),
+                                                                with_info=True, as_supervised=True)
+
+    train_batches = raw_train.map(format_example)
+    num_generated_examples = 0
+    if use_vae_to_generate_data:
+        m = MyMethod(samples_to_generate_per_label, option)
+        print("GENERATING ADDITIONAL {} SAMPLES".format(samples_to_generate_per_label * 10))
+        additional_data, labels, num_generated_examples = m.generate_data()
+        num_copys = 1
+        num_generated_examples *= num_copys
+
+        additional_data_set = tf.data.Dataset.from_tensor_slices((additional_data, labels))
+        train_batches = train_batches.concatenate(additional_data_set)  # Merge data sets
+
+    train_batches = train_batches.shuffle(1000).batch(BATCH_SIZE).repeat()
+    validation_batches = raw_validation.map(format_example).batch(BATCH_SIZE).repeat()
+    test_batches = raw_test.map(format_example).batch(BATCH_SIZE).repeat()
+
+    num_train, num_validation = (
+        metadata.splits['train'].num_examples * weight / 10
+        for weight in train_split_weights
+    )
+
+    num_train += num_generated_examples
+    print("NUM TRAIN: ")
+    print(num_train)
+
+    num_test = metadata.splits['test'].num_examples
+
+    train_steps = round(num_train) // BATCH_SIZE
+    validation_steps = round(num_validation) // BATCH_SIZE
+    test_steps = round(num_test) // BATCH_SIZE
+
+    steps_dict = EasyDict(train_steps=train_steps, validation_steps=validation_steps, test_steps=test_steps)
+    data = EasyDict(train=train_batches, validation=validation_batches, test=test_batches, steps=steps_dict)
+
+    return data
+
+
+def evaluate_on_adversarial(model, data):
+    print("Evaluating on adversarial:")
+    test_acc_fgsm = tf.metrics.SparseCategoricalAccuracy()
+    steps = 0
+    for idx, (x, y) in enumerate(data.test):
+        x_fgm = fast_gradient_method(model, x, 0.3, np.inf)
+        y_pred_fgm = model(x_fgm)
+        test_acc_fgsm(y, y_pred_fgm)
+        if steps >= data.steps.test_steps:
+            break
+        steps += 1
+
+    print('test acc on FGM adversarial examples (%): {:.3f}'.format(test_acc_fgsm.result() * 100))
+
+
 def main():
-    possible_options = ["highest_loss_walk", "biggest_spread_walk", "archimedean_spiral_walk",
-                        "generate_in_range_for_single_point"]
-    m = MyMethod(num_samples_to_generate=5, option=possible_options[0])
-    m.generate_data()
+    use_vae_to_generate_data = False
+    data = ld_mnist(use_vae_to_generate_data)
+
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.Dense(10, activation='softmax')
+    ])
+
+    now = datetime.now().strftime("%Y%m%d-%H%M%S")
+    with_additional_data = "with-additional-data/"
+    if not use_vae_to_generate_data:
+        with_additional_data = "without-additional-data/"
+
+    logdir = "logs/" + with_additional_data + now + "/gradient-tape"
+    weights_path = "logs/" + with_additional_data + now + "/weights"
+
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+    model_cb = tf.keras.callbacks.ModelCheckpoint(weights_path, monitor='val_loss', verbose=1, save_best_only=True)
+    es_cb = tf.keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=10)
+
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.fit(data.train, epochs=1, steps_per_epoch=data.steps.train_steps, validation_data=data.validation,
+              validation_steps=data.steps.validation_steps, callbacks=[tensorboard_callback, model_cb, es_cb])
+
+    # Load best weights and evaluate
+    model.load_weights(weights_path + "/variables/variables")
+    model.evaluate(data.test, steps=data.steps.test_steps)
+    evaluate_on_adversarial(model, data)
 
 
 if __name__ == '__main__':
     main()
+
+    # Used labels: 1, 6, 3, 4, 5
