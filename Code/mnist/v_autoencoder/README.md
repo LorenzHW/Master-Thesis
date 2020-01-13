@@ -15,3 +15,10 @@
 * ELBO + Triplet Loss
 * 900-1000 epochs
 79/79 [==============================] - 9s 116ms/step - triplet_loss: 0.2445 - elbo_loss: 96.5242
+
+
+20200113-135546
+* Used for plotter
+* 2 Dim
+* ELBO
+* 100 epochs

@@ -325,27 +325,6 @@ class MyMethod:
 
         return max_loss_dfs
 
-    def biggest_spread_from_max_loss_point(self, incorrect_points_per_label: List[DataFrame]) -> List[DataFrame]:
-        dimension_columns = ["dimension_" + str(i) for i in range(1, self.num_dimensions + 1)]
-        res = []
-
-        for df in incorrect_points_per_label:
-            df = df.sort_values(by=["losses"])
-            max_loss_point = df.tail(1)
-
-            cur_max_distance = float("-inf")
-            cur_max_idx = 0
-            points = df[dimension_columns].to_numpy()
-            for idx, p in enumerate(points):
-                l2_distance = np.linalg.norm(max_loss_point[dimension_columns].to_numpy()[0] - p)
-                if l2_distance > cur_max_distance:
-                    cur_max_distance = l2_distance
-                    cur_max_idx = idx
-            furthest_away = df.iloc[[cur_max_idx]]
-            combined = pd.concat([max_loss_point, furthest_away])
-            res.append(combined)
-        return res
-
     @staticmethod
     def biggest_spread_on_entire_latent_rep(incorrect_points_per_label: List[DataFrame]) -> List[DataFrame]:
         res = []
@@ -452,7 +431,6 @@ class MyMethod:
 
     def generate_data(self):
         incorrect_classified_per_label = self._get_incorrect_classified_per_label()
-        # anchor_points_per_label = self.biggest_spread_from_max_loss_point(incorrect_classified_per_label)
 
         if self.option in ["highest_loss_walk", "archimedean_spiral_walk", "generate_in_range_for_single_point"]:
             anchor_points_per_label = self._get_max_loss_points_per_label(incorrect_classified_per_label)
